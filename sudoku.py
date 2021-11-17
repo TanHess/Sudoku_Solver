@@ -1,4 +1,6 @@
 from typing import List, Tuple, Set
+from time import time
+from copy import deepcopy
 
 # Initialize the soduko board with a 9x9 list of values passed in 
 # during the Class instantiation
@@ -141,5 +143,96 @@ class Sudoku():
             if len(inds) == 1:
                 uniques.append((inds, [num])) # Append the only candidate to unique with its index and value
         return uniques
+
+
+
+    def start_game(self):
+        self.attempt_board = []
+        self.game_over = False
+        for i in range(9):
+            self.attempt_board.append([])
+            for j in range(9):
+                self.attempt_board[i].append(self.board[i][j])
+    
+
+    def check_win(self):
+        solutions, solved, stats = self.solveSudoku(self.board, find_all=True)
+        if solved == False:
+            return False
+        for solution in solutions:
+            for i in range(9):
+                for j in range(9):
+                    if solution[i][j] != self.attempt_board[i][j]:
+                        return False
+        return True
+
+
+    def check_submission(self, row, col):
+        solutions, solved, stats = self.solveSudoku(self.board, find_all=True)
+        for solution in solutions:
+            if self.attempt_board[row][col] == solution[row][col]:
+                return True
+        return False
+
+
+    def solveSudoku(self, board: List[List[int]], find_all=False) -> Tuple[List[List[List[int]]], bool, dict]:
+        def solve(puzzle: Sudoku, depth=0):
+            nonlocal calls, max_depth, solutions
+            calls += 1
+            max_depth = max(max_depth, depth)
+            solved = False
+            while solved == False:
+                solved = True   # Either solved or stuck
+                edited = False  # Change to true if we use place_value
+                for r in range(puzzle._BOARD_SIZE):
+                    for c in range(puzzle._BOARD_SIZE):
+                        if puzzle.board[r][c] == 0:     # Unsolved part of board
+                            solved = False
+                            options = puzzle.candidates[r][c]
+                            if len(options) == 0:
+                                return False
+                            elif len(options) == 1:
+                                value = options.pop()
+                                puzzle.place_value(r, c, value)
+                                edited = True
+                if not edited:
+                    if solved:
+                        solutions.append(puzzle.board)
+                        return True
+                    else:   # Time to start guessing
+                        min_guess = (10, -1)  # Initialize this to a value that is always higher than the highest minimum guesses
+                        for r in range(puzzle._BOARD_SIZE):
+                            for c in range(puzzle._BOARD_SIZE):
+                                options = puzzle.candidates[r][c]
+                                if len(options) > 1:
+                                    min_guess = min(min_guess, (len(options), (r, c)))
+                        r, c = min_guess[1]  # The index of the element with the least possible answers
+                        options = puzzle.candidates[r][c]
+                        for i in options:
+                            next_try = deepcopy(puzzle)
+                            next_try.place_value(r, c, i)   # Start guessing values for the next location. (based on the candidates list)
+                            solved = solve(next_try, depth=depth+1)    # Recursively call this function now with each guessed value
+                            if solved and not find_all:
+                                break
+                        return solved
+            return solved
+        solutions = []
+        calls = max_depth = 0
+        puzzle = Sudoku(board)
+        time_start = time()
+        solved = solve(puzzle, depth=0)
+        time_end = time()
+        if len(solutions) > 0:  # Code protects against find_all = True with one solution returning solved=False
+            solved = True
+        runtime = time_end - time_start
+        runtime = "{:.5}".format(runtime)
+        stats={
+            "calls": calls,
+            "max depth": max_depth,
+            "unique solutions": len(solutions),
+            "runtime" : runtime
+        }
+        return solutions, solved, stats 
+
 
 
