@@ -1,7 +1,7 @@
 from sudoku_helpers import *
 
 class PuzzleMenu():
-    def __init__(self, infile: str) -> None:
+    def __init__(self, infile = 'puzzles.txt') -> None:
 
         beg = []
         int = []
@@ -37,11 +37,29 @@ class PuzzleMenu():
         counter = 0
         for puzzle in category:
             board = string_to_board(puzzle)
-            temp_sudoku =  Sudoku(board)
+            temp_sudoko =  Sudoku(board)
             counter += 1
             print("\n===============BOARD " + str(counter) + "===============\n")
-            print(repr(temp_sudoku))
+            print(repr(temp_sudoko))
         return counter
+
+
+    # For use with the menuUI. 
+    # Returns a list of Sudoku objects in the selected category.
+    def get_boards(self, cat) -> List[Sudoku]:
+        if cat == 0:
+            category = self.easy_puzzles
+        elif cat == 1:
+            category = self.intermediate_puzzles
+        elif cat == 2:
+            category = self.expert_puzzles
+
+        games = []
+        for puzzle in category:
+            board = string_to_board(puzzle)
+            temp_soduko = Sudoku(board)
+            games.append(temp_soduko)
+        return games
 
 
     def show_menu(self) -> List[List[int]]:
